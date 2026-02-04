@@ -7,16 +7,12 @@ on:
     branches: [ main ]
 
 jobs:
-  # --- JOB 1 : TESTS (S'exécute en premier) ---
+  # --- JOB 1 : TESTS ---
   test:
     runs-on: ubuntu-latest
-    
-    # On définit le dossier de travail ici pour tout ce job
     defaults:
       run:
         working-directory: ./lab
-
-    # Service Redis pour les tests
     services:
       redis:
         image: redis
@@ -30,32 +26,22 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20.x' 
-          
       - name: Install dependencies
         run: npm ci
-        
       - name: Run Tests
         run: npm test
 
-  # --- JOB 2 : DÉPLOIEMENT (S'exécute seulement si 'test' réussit) ---
+  # --- JOB 2 : DÉPLOIEMENT RENDER ---
   deploy:
-    needs: test 
+    needs: test # Attend que les tests réussissent
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' 
+    if: github.ref == 'refs/heads/main' # Uniquement sur la branche main
     
     steps:
-      - uses: actions/checkout@v3
-      
-      - name: Deploy to Heroku
-        uses: akhileshns/heroku-deploy@v3.12.14
-        with:
-          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-          heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
-          heroku_email: ${{ secrets.HEROKU_EMAIL }}
-        
-          appdir: "lab"
+      - name: Trigger Render Deployment
+        # On utilise curl pour appeler l'URL secrète de Render
+        run: curl -X GET ${{ secrets.RENDER_DEPLOY_HOOK }}
