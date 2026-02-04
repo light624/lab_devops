@@ -1,3 +1,4 @@
+//This is the main entry point of the application
 const express = require('express')
 const userRouter = require('./routes/user')
 const bodyParser = require('body-parser')
